@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.http import JsonResponse
 from connections import MySQLConnection
@@ -16,7 +16,6 @@ class GetMovieList(TemplateView):
         query_params = request.GET
         query_term = query_params.get('q')
         movie_info = self.get_movie_name(query_term)
-        print movie_info
         return JsonResponse({'movie': movie_info[:7]}, status=200)
         
         
@@ -29,6 +28,8 @@ class HomePage(TemplateView):
 class GetMovieCoordinates(TemplateView):
     
     def get_movie_location(self, query):
+        if not query:
+            return list()
         result = Movie.objects.filter(name__istartswith=query)
         return list(set([title.location + 'san francisco' for title in result]))
     
@@ -47,7 +48,7 @@ class GetMovieCoordinates(TemplateView):
         query_params = request.GET
         query_term = query_params.get('search-value')
         location_list = self.get_movie_location(query_term)
-        print location_list
+        if not location_list:
+            return redirect('homepage')
         # coordinates_dict = self.get_location_coordinates(location_list)
         return render(request, 'location.html', {'location_list': '|'.join(location_list), 'search_value':query_term })
-        # return JsonResponse({'location_list': '|'.join(location_list)}, status=200)
